@@ -2,10 +2,8 @@
 #define __H_DATASET__
 #include <stddef.h>
 
-typedef double *dataset_example_t;
-
 typedef struct {
-  dataset_example_t *examples;
+  double **examples;
   size_t m;
   size_t n;
   size_t capacity;

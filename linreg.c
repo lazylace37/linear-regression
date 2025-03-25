@@ -65,7 +65,7 @@ static struct argp argp = {
     options, parse_opt, "FILE", "Linear Regression example", NULL, NULL, NULL,
 };
 
-double compute_hypothesis(size_t n, double *theta, dataset_example_t example) {
+double compute_hypothesis(size_t n, double *theta, double *example) {
   double h = 0;
   for (size_t i = 0; i < n; i++) {
     if (i == 0) { // Bias

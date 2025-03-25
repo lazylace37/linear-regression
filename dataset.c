@@ -5,7 +5,7 @@
 
 dataset_t *dataset_init(size_t initial_m, size_t n) {
   dataset_t *dataset = calloc(1, sizeof(dataset_t));
-  dataset->examples = calloc(initial_m, sizeof(dataset_example_t));
+  dataset->examples = calloc(initial_m, sizeof(double *));
   dataset->capacity = initial_m;
 
   for (size_t i = 0; i < initial_m; i++) {
@@ -49,7 +49,7 @@ void dataset_normalize(dataset_t *dataset, double *means, double *stddevs) {
 void dataset_extend(dataset_t *dataset) {
   dataset->capacity *= 2;
   dataset->examples =
-      realloc(dataset->examples, dataset->capacity * sizeof(dataset_example_t));
+      realloc(dataset->examples, dataset->capacity * sizeof(double *));
   for (size_t i = dataset->m; i < dataset->capacity; i++) {
     dataset->examples[i] = calloc(dataset->n, sizeof(double));
   }
