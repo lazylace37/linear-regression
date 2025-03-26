@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 dataset_t *dataset_init(size_t initial_m, size_t n) {
   dataset_t *dataset = calloc(1, sizeof(dataset_t));
@@ -44,6 +45,33 @@ void dataset_normalize(dataset_t *dataset, double *means, double *stddevs) {
       }
     }
   }
+}
+
+void dataset_split(dataset_t *dataset, double ratio, unsigned int seed,
+                   dataset_t **train_dataset, dataset_t **valid_dataset) {
+  dataset_t *train = calloc(1, sizeof(dataset_t));
+  train->m = dataset->m * ratio;
+  train->n = dataset->n;
+  train->capacity = 0;
+
+  dataset_t *valid = calloc(1, sizeof(dataset_t));
+  valid->m = dataset->m - train->m;
+  valid->n = dataset->n;
+  valid->capacity = 0;
+
+  for (size_t i = dataset->m - 1; i > 0; i--) {
+    size_t j = rand_r(&seed) % (i + 1);
+
+    double *tmp = dataset->examples[i];
+    dataset->examples[i] = dataset->examples[j];
+    dataset->examples[j] = tmp;
+  }
+
+  train->examples = dataset->examples;
+  valid->examples = dataset->examples + train->m;
+
+  (*train_dataset) = train;
+  (*valid_dataset) = valid;
 }
 
 void dataset_extend(dataset_t *dataset) {
