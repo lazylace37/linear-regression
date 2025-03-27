@@ -113,6 +113,10 @@ int main(int argc, char *argv[]) {
 
   argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
+  if (arguments.in_file == NULL || strlen(arguments.in_file) == 0) {
+    fprintf(stderr, "No input file specified\n");
+    return EXIT_FAILURE;
+  }
   if (arguments.separator == 0)
     arguments.separator = ';';
   if (arguments.split <= 0 || arguments.split > 1) {
@@ -124,10 +128,7 @@ int main(int argc, char *argv[]) {
     arguments.seed = time(NULL);
   srand(arguments.seed);
 
-  FILE *in_file = stdin;
-  if (arguments.in_file != NULL && strlen(arguments.in_file) > 0) {
-    in_file = fopen(arguments.in_file, "r");
-  }
+  FILE *in_file = fopen(arguments.in_file, "r");
   if (!in_file) {
     perror("input file open failed");
     return EXIT_FAILURE;
@@ -256,8 +257,7 @@ int main(int argc, char *argv[]) {
   fprintf(out_file, "\n");
 
   // Cleanup
-  if (strlen(arguments.in_file) > 0)
-    fclose(in_file);
+  fclose(in_file);
   if (arguments.out_file != NULL && strlen(arguments.out_file) > 0)
     fclose(out_file);
   free(theta);
