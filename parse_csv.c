@@ -3,20 +3,50 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BUF_SIZE 2048
+#define BUF_SIZE 65536
 
-int get_num_features(FILE *in_file, size_t *n, const char *delim) {
-  (*n) = 0;
+int csv_calc_size(FILE *in_file, char separator, int skip_header, size_t *m,
+                  size_t *n) {
+  *m = 0;
+  *n = 0;
 
-  char b[BUF_SIZE];
-  char *line = fgets(b, BUF_SIZE, in_file);
-  if (line == NULL)
-    return EXIT_FAILURE;
+  char buf[BUF_SIZE];
+  int is_first_row = 1;
+  size_t cur_row_n = 0;
+  ssize_t read = 0;
+  while ((read = fread(buf, 1, BUF_SIZE, in_file)) > 0) {
+    for (ssize_t i = 0; i < read; i++) {
+      if (buf[i] == separator) {
+        if (is_first_row) {
+          (*n)++;
+        }
+        cur_row_n++;
+      }
 
-  char *t = NULL;
-  char *saveptr = line;
-  while ((t = strtok_r(saveptr, delim, &saveptr)) != NULL) {
+      if (buf[i] == '\n' && cur_row_n > 0) {
+        if (!is_first_row && cur_row_n != *n) {
+          fprintf(
+              stderr,
+              "Number of columns in row %zu is different from the first row\n",
+              *m);
+          return EXIT_FAILURE;
+        }
+
+        (*m)++;
+        is_first_row = 0;
+        cur_row_n = 0;
+      }
+    }
+  }
+
+  if (*n > 0)
     (*n)++;
+  if (skip_header && *m > 0)
+    (*m)--;
+
+  if (read < 0) {
+    perror("file read failed");
+    return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
 }
@@ -25,23 +55,32 @@ int parse_csv(FILE *in_file, dataset_t **dataset, char separator,
               int skip_header) {
   char delim[2] = {separator, 0};
 
-  size_t n = 0;
-  if (get_num_features(in_file, &n, delim) != EXIT_SUCCESS) {
+  size_t m = 0, n = 0;
+  if (csv_calc_size(in_file, separator, skip_header, &m, &n) != EXIT_SUCCESS) {
     fprintf(stderr, "Failed to parse csv file.\n");
     return EXIT_FAILURE;
   }
 
-  if (!skip_header) {
-    fseek(in_file, 0, SEEK_SET);
+  fseek(in_file, 0, SEEK_SET);
+
+  *dataset = dataset_init(m, n);
+  if (*dataset == NULL) {
+    fprintf(stderr, "Dataset too big to fit in memory.\n");
+    return EXIT_FAILURE;
   }
 
-  *dataset = dataset_init(10, n);
-  (*dataset)->n = n;
+  if (m == 0 || n == 0)
+    return EXIT_SUCCESS;
 
   char b[BUF_SIZE];
   char *line;
+  size_t i = 0;
+  size_t is_header_line = 1;
   while ((line = fgets(b, BUF_SIZE, in_file)) != NULL) {
-    size_t cur_n = 0;
+    if (skip_header && is_header_line) {
+      is_header_line = 0;
+      continue;
+    }
 
     char *t = NULL;
     char *saveptr = line;
@@ -53,22 +92,7 @@ int parse_csv(FILE *in_file, dataset_t **dataset, char separator,
         return EXIT_FAILURE;
       }
 
-      if (cur_n >= (*dataset)->n) {
-        fprintf(stderr,
-                "Number of features in line %zu is greater than in "
-                "line 0\n",
-                n);
-        return EXIT_FAILURE;
-      }
-
-      (*dataset)->examples[(*dataset)->m][cur_n] = d;
-
-      cur_n++;
-    }
-
-    (*dataset)->m++;
-    if ((*dataset)->m == (*dataset)->capacity) {
-      dataset_extend(*dataset);
+      (*dataset)->examples[i++] = d;
     }
   }
   if (ferror(in_file)) {

@@ -128,14 +128,15 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  double *means = model->examples[0];
-  double *stddevs = model->examples[1];
-  double *theta = model->examples[2];
+  double *means = model->examples;
+  double *stddevs = model->examples + 1 * model->n;
+  double *theta = model->examples + 2 * model->n;
 
   dataset_normalize(dataset, means, stddevs);
 
   for (size_t i = 0; i < dataset->m; i++) {
-    double h_i = compute_hypothesis(dataset->n, theta, dataset->examples[i]);
+    double *example = dataset->examples + i * dataset->n;
+    double h_i = compute_hypothesis(dataset->n, theta, example);
     printf("[%.5zu] %.5f\n", i, h_i);
   }
 

@@ -181,13 +181,13 @@ int main(int argc, char *argv[]) {
     for (size_t j = 0; j < train_dataset->n; j++) {
       double sum = 0;
       for (size_t i = 0; i < train_dataset->m; i++) {
-        double h_i = compute_hypothesis(train_dataset->n, theta,
-                                        train_dataset->examples[i]);
-        double y_i = train_dataset->examples[i][train_dataset->n - 1];
+        double *example = train_dataset->examples + i * train_dataset->n;
+        double h_i = compute_hypothesis(train_dataset->n, theta, example);
+        double y_i = example[train_dataset->n - 1];
         if (j == 0)
           sum += h_i - y_i * 1;
         else
-          sum += (h_i - y_i) * train_dataset->examples[i][j - 1];
+          sum += (h_i - y_i) * example[j - 1];
       }
       double delta = alpha * sum / train_dataset->m;
       tmp[j] = theta[j] - delta;
@@ -201,9 +201,9 @@ int main(int argc, char *argv[]) {
     // Compute training cost
     double train_cost = 0;
     for (size_t i = 0; i < train_dataset->m; i++) {
-      double h_i = compute_hypothesis(train_dataset->n, theta,
-                                      train_dataset->examples[i]);
-      double y_i = train_dataset->examples[i][train_dataset->n - 1];
+      double *example = train_dataset->examples + i * train_dataset->n;
+      double h_i = compute_hypothesis(train_dataset->n, theta, example);
+      double y_i = example[train_dataset->n - 1];
       train_cost += pow(h_i - y_i, 2);
     }
     train_cost /= (2 * train_dataset->m);
@@ -211,9 +211,9 @@ int main(int argc, char *argv[]) {
     // Compute validation cost
     double valid_cost = 0;
     for (size_t i = 0; i < valid_dataset->m; i++) {
-      double h_i = compute_hypothesis(valid_dataset->n, theta,
-                                      valid_dataset->examples[i]);
-      double y_i = valid_dataset->examples[i][valid_dataset->n - 1];
+      double *example = valid_dataset->examples + i * valid_dataset->n;
+      double h_i = compute_hypothesis(valid_dataset->n, theta, example);
+      double y_i = example[valid_dataset->n - 1];
       valid_cost += pow(h_i - y_i, 2);
     }
     valid_cost /= (2 * valid_dataset->m);
