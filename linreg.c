@@ -236,6 +236,10 @@ int main(int argc, char *argv[]) {
   if (arguments.out_file != NULL && strlen(arguments.out_file) > 0) {
     out_file = fopen(arguments.out_file, "w");
   }
+  if (!out_file) {
+    perror("output file open failed");
+    return EXIT_FAILURE;
+  }
   for (size_t i = 0; i < train_dataset->n - 1; i++) {
     fprintf(out_file, "%.*f;", DBL_DIG - 1, means[i]);
   }
@@ -254,6 +258,8 @@ int main(int argc, char *argv[]) {
   // Cleanup
   if (strlen(arguments.in_file) > 0)
     fclose(in_file);
+  if (arguments.out_file != NULL && strlen(arguments.out_file) > 0)
+    fclose(out_file);
   free(theta);
   free(means);
   free(stddevs);
